@@ -85,6 +85,8 @@ async function main() {
         body: fs.createReadStream(target),
     };
 
+    let result;
+
     if (fileId === null) {
         if (overwrite) {
             actions.info(`File ${filename} does not exist yet. Creating it.`);
@@ -96,7 +98,7 @@ async function main() {
             parents: [uploadFolderId],
         };
 
-        return drive.files.create({
+        result = await drive.files.create({
             resource: fileMetadata,
             media: fileData,
             uploadType: 'multipart',
@@ -105,11 +107,21 @@ async function main() {
         });
     } else {
         actions.info(`File ${filename} already exists. Updating it.`);
-        return drive.files.update({
+        result = await drive.files.update({
             fileId,
             media: fileData,
         });
     }
+
+    const uploadedFileId = result.data.id;
+
+    actions.setOutput('file_id', uploadedFileId);
+    console.log(`File ID: ${uploadedFileId}`);
+
+    const fileUrl = `https://drive.google.com/file/d/${uploadedFileId}/view`;
+
+    actions.setOutput('file_url', fileUrl);
+    console.log(`File URL: ${fileUrl}`);
 }
 
 main().catch((error) => actions.setFailed(error));

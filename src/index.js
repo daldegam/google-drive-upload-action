@@ -116,12 +116,12 @@ async function main() {
     const uploadedFileId = result.data.id;
 
     actions.setOutput('file_id', uploadedFileId);
-    console.log(`File ID: ${uploadedFileId}`);
+    actions.info(`File ID: ${uploadedFileId}`);
 
     const fileUrl = `https://drive.google.com/file/d/${uploadedFileId}/view`;
 
     actions.setOutput('file_url', fileUrl);
-    console.log(`File URL: ${fileUrl}`);
+    actions.info(`File URL: ${fileUrl}`);
 }
 
 main().catch((error) => actions.setFailed(error));

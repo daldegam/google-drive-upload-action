@@ -106,7 +106,7 @@ async function main() {
             supportsAllDrives: true,
         });
     } else {
-        actions.info(`File ${filename} already exists. Updating it.`);
+        actions.info(`File ${filename} already exists. Override it.`);
         result = await drive.files.update({
             fileId,
             media: fileData,

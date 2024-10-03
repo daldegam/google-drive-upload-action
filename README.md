@@ -1,14 +1,14 @@
 # google-drive-upload-action
-Github action to upload a file to Google Drive using a service account.
+Github action to upload a file to Google Drive using a service account and output the file ID and URL.
 
 ## Usage
 #### Simple example:
 ```
 steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Upload a file to Google Drive
-      uses: willo32/google-drive-upload-action@v1
+      uses: nextDriveIoE/google-drive-upload-action@v1
       with:
         target: <LOCAL_PATH_TO_YOUR_FILE>
         credentials: ${{ secrets.<YOUR_SERVICE_ACCOUNT_CREDENTIALS> }}

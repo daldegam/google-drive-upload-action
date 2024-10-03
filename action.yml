@@ -1,5 +1,8 @@
-name: 'Google Drive upload'
-description: 'Upload a file to Google Drive using a service account'
+name: 'Google Drive Upload File'
+branding:
+  icon: upload-cloud
+  color: orange
+description: 'Upload a file to Google Drive using a service account and output the file ID and URL'
 inputs:
   credentials:
     description: 'Google service account credentials'
@@ -34,6 +37,3 @@ outputs:
 runs:
   using: 'node12'
   main: 'dist/index.js'
-branding:
-  icon: upload-cloud
-  color: purple

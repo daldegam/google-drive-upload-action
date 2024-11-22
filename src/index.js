@@ -6,7 +6,7 @@ const { google } = require('googleapis');
 
 const credentials = actions.getInput('credentials', { required: true });
 const parentFolderId = actions.getInput('parent_folder_id', { required: true });
-const target = actions.getInput('target', { required: true });
+const target = actions.getInput('target', { required: false });
 const owner = actions.getInput('owner', { required: false });
 const childFolder = actions.getInput('child_folder', { required: false });
 const overwrite = actions.getInput('overwrite', { required: false }) === 'true';

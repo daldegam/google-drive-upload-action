@@ -16,7 +16,7 @@ steps:
 ```
 
 ### Inputs
-#### `target` (Required):
+#### `target` (Optional):
 Local path to the file to upload, can be relative from github runner current directory.
 
 #### `credentials` (Required):
@@ -49,6 +49,9 @@ A sub-folder where to upload your file. It will be created if non-existent and m
 The email address of a user account that has access to the drive folder and will get the ownership of the file after its creation. To use this feature you must grant your service account a [domain-wide delegation of authority](https://developers.google.com/admin-sdk/directory/v1/guides/delegation) beforehand.
 
 ### Outputs
+#### `folder_id`
+The ID of the folder the file was uploaded to.
+
 #### `file_id`
 The id of the uploaded file.
 

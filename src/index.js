@@ -49,6 +49,8 @@ async function getUploadFolderId() {
         supportsAllDrives: true,
     });
 
+    actions.info(`Created child folder ${childFolder} with ID ${childFolderId}`);
+
     return childFolderId;
 }
 
@@ -70,6 +72,12 @@ async function getFileId(targetFilename, folderId) {
 
 async function main() {
     const uploadFolderId = await getUploadFolderId();
+
+    actions.setOutput('folder_id', uploadFolderId);
+
+    if (!target) {
+        actions.info('No target file specified. Skipping upload.');
+    }
 
     if (!filename) {
         filename = target.split('/').pop();

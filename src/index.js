@@ -77,6 +77,7 @@ async function main() {
 
     if (!target) {
         actions.info('No target file specified. Skipping upload.');
+        return;
     }
 
     if (!filename) {

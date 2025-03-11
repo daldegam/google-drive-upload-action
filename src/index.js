@@ -152,9 +152,24 @@ async function main() {
     if (isDirectory) {
         actions.info(`Target is a directory. Uploading all files in ${target}`);
 
-        // Use glob to find all files in the root of the folder (non-recursive)
-        // Using glob v10 API with proper destructuring
-        const files = await glob(`${target}/*`, { nodir: true });
+        // List all files in the directory using fs.readdirSync instead of glob
+        let files = [];
+        try {
+            // Get all entries in the directory
+            const entries = fs.readdirSync(target, { withFileTypes: true });
+
+            // Filter to include only files (not directories)
+            files = entries
+                .filter(entry => entry.isFile())
+                .map(entry => path.join(target, entry.name));
+
+            actions.info(`Directory contents (${entries.length} entries):`);
+            for (const entry of entries) {
+                actions.info(`- ${entry.name} (${entry.isFile() ? 'file' : 'directory'})`);
+            }
+        } catch (error) {
+            actions.warning(`Error reading directory: ${error.message}`);
+        }
 
         if (files.length === 0) {
             actions.info('No files found in the directory. Skipping upload.');

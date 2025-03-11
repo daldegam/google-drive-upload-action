@@ -23,40 +23,48 @@ async function getUploadFolderId() {
         return parentFolderId;
     }
 
-    // Check if child folder already exists
-    const { data: { files } } = await drive.files.list({
-        q: `name='${childFolder}' and '${parentFolderId}' in parents and trashed=false`,
-        fields: 'files(id)',
-        includeItemsFromAllDrives: true,
-        supportsAllDrives: true,
-    });
+    // Split the child folder path into segments for recursive creation
+    const folderSegments = childFolder.split('/').filter(segment => segment.trim() !== '');
+    let currentFolderId = parentFolderId;
 
-    if (files.length > 1) {
-        throw new Error('More than one entry match the child folder name');
+    // Process each folder segment in sequence
+    for (const folderName of folderSegments) {
+        // Check if folder already exists
+        const { data: { files } } = await drive.files.list({
+            q: `name='${folderName}' and '${currentFolderId}' in parents and trashed=false`,
+            fields: 'files(id)',
+            includeItemsFromAllDrives: true,
+            supportsAllDrives: true,
+        });
+
+        if (files.length > 1) {
+            throw new Error(`More than one entry match the folder name: ${folderName}`);
+        }
+
+        // Use existing folder if found
+        if (files.length === 1) {
+            actions.info(`Using existing folder ${folderName} with ID ${files[0].id}`);
+            currentFolderId = files[0].id;
+        } else {
+            // Create new folder if none exists
+            const folderMetadata = {
+                name: folderName,
+                mimeType: 'application/vnd.google-apps.folder',
+                parents: [currentFolderId],
+            };
+
+            const { data: { id: newFolderId } } = await drive.files.create({
+                resource: folderMetadata,
+                fields: 'id',
+                supportsAllDrives: true,
+            });
+
+            actions.info(`Created new folder ${folderName} with ID ${newFolderId}`);
+            currentFolderId = newFolderId;
+        }
     }
 
-    // Return existing folder ID if found
-    if (files.length === 1) {
-        actions.info(`Using existing folder ${childFolder} with ID ${files[0].id}`);
-        return files[0].id;
-    }
-
-    // Create new folder if none exists
-    const childFolderMetadata = {
-        name: childFolder,
-        mimeType: 'application/vnd.google-apps.folder',
-        parents: [parentFolderId],
-    };
-
-    const { data: { id: childFolderId } } = await drive.files.create({
-        resource: childFolderMetadata,
-        fields: 'id',
-        supportsAllDrives: true,
-    });
-
-    actions.info(`Created new folder ${childFolder} with ID ${childFolderId}`);
-
-    return childFolderId;
+    return currentFolderId;
 }
 
 async function getFileId(targetFilename, folderId) {

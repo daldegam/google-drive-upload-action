@@ -35,6 +35,19 @@ The name of the file to be uploaded. Set to the `target` filename if not specifi
 #### `child_folder` (Optional):
 A sub-folder where to upload your file. It will be created if non-existent and must remain unique. Useful to organize your drive like so:
 
+You can specify a path with multiple levels (e.g., "folder1/folder2/folder3") and the action will create the folder structure recursively. Each folder in the path will be created if it doesn't exist.
+
+Example:
+```yaml
+- name: Upload a file to Google Drive
+  uses: nextDriveIoE/google-drive-upload-action@v2
+  with:
+    target: path/to/your/file.txt
+    credentials: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}
+    parent_folder_id: <YOUR_DRIVE_FOLDER_ID>
+    child_folder: "version/1.0.0/debug"  # Will create folders: version → 1.0.0 → debug
+```
+
 #### `owner` (Optional):
 The email address of a user account that has access to the drive folder and will get the ownership of the file after its creation. To use this feature you must grant your service account a [domain-wide delegation of authority](https://developers.google.com/admin-sdk/directory/v1/guides/delegation) beforehand.
 

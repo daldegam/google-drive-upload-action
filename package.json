@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
+    "glob": "^10.4.5",
     "googleapis": "^105.0.0"
   }
 }

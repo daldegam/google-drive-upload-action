@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 const fs = require('fs');
+const path = require('path');
+const { glob } = require('glob');
 
 const actions = require('@actions/core');
 const { google } = require('googleapis');
@@ -83,40 +85,28 @@ async function getFileId(targetFilename, folderId) {
     return null;
 }
 
-async function main() {
-    const uploadFolderId = await getUploadFolderId();
-
-    actions.setOutput('folder_id', uploadFolderId);
-
-    if (!target) {
-        actions.info('No target file specified. Skipping upload.');
-        return;
-    }
-
-    if (!filename) {
-        filename = target.split('/').pop();
-    }
+async function uploadFile(filePath, uploadFolderId, customFilename = null) {
+    const actualFilename = customFilename || path.basename(filePath);
 
     let fileId = null;
-
     if (overwrite) {
-        fileId = await getFileId(filename, uploadFolderId);
+        fileId = await getFileId(actualFilename, uploadFolderId);
     }
 
     const fileData = {
-        body: fs.createReadStream(target),
+        body: fs.createReadStream(filePath),
     };
 
     let result;
 
     if (fileId === null) {
         if (overwrite) {
-            actions.info(`File ${filename} does not exist yet. Creating it.`);
+            actions.info(`File ${actualFilename} does not exist yet. Creating it.`);
         } else {
-            actions.info(`Creating file ${filename}.`);
+            actions.info(`Creating file ${actualFilename}.`);
         }
         const fileMetadata = {
-            name: filename,
+            name: actualFilename,
             parents: [uploadFolderId],
         };
 
@@ -128,7 +118,7 @@ async function main() {
             supportsAllDrives: true,
         });
     } else {
-        actions.info(`File ${filename} already exists. Override it.`);
+        actions.info(`File ${actualFilename} already exists. Override it.`);
         result = await drive.files.update({
             fileId,
             media: fileData,
@@ -136,14 +126,70 @@ async function main() {
     }
 
     const uploadedFileId = result.data.id;
-
-    actions.setOutput('file_id', uploadedFileId);
     actions.info(`File ID: ${uploadedFileId}`);
 
     const fileUrl = `https://drive.google.com/file/d/${uploadedFileId}/view`;
-
-    actions.setOutput('file_url', fileUrl);
     actions.info(`File URL: ${fileUrl}`);
+
+    return {
+        id: uploadedFileId,
+        url: fileUrl
+    };
+}
+
+async function main() {
+    const uploadFolderId = await getUploadFolderId();
+    actions.setOutput('folder_id', uploadFolderId);
+
+    if (!target) {
+        actions.info('No target file specified. Skipping upload.');
+        return;
+    }
+
+    // Check if the target is a directory
+    const isDirectory = fs.lstatSync(target).isDirectory();
+
+    if (isDirectory) {
+        actions.info(`Target is a directory. Uploading all files in ${target}`);
+
+        // Use glob to find all files in the root of the folder (non-recursive)
+        // Using glob v10 API with proper destructuring
+        const files = await glob(`${target}/*`, { nodir: true });
+
+        if (files.length === 0) {
+            actions.info('No files found in the directory. Skipping upload.');
+            return;
+        }
+
+        actions.info(`Found ${files.length} files to upload.`);
+
+        const uploadResults = [];
+        for (const file of files) {
+            actions.info(`Uploading ${file}...`);
+            const result = await uploadFile(file, uploadFolderId);
+            uploadResults.push(result);
+        }
+
+        // Set outputs with the IDs and URLs of the first file (for compatibility)
+        if (uploadResults.length > 0) {
+            actions.setOutput('file_id', uploadResults[0].id);
+            actions.setOutput('file_url', uploadResults[0].url);
+        }
+
+        // Set additional outputs with all files
+        actions.setOutput('uploaded_files', JSON.stringify(uploadResults));
+        actions.info(`Uploaded ${uploadResults.length} files successfully.`);
+    } else {
+        // If it's a single file, maintain the original behavior
+        if (!filename) {
+            filename = path.basename(target);
+        }
+
+        const result = await uploadFile(target, uploadFolderId, filename);
+
+        actions.setOutput('file_id', result.id);
+        actions.setOutput('file_url', result.url);
+    }
 }
 
 main().catch((error) => actions.setFailed(error));
